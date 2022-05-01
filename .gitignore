@@ -11,7 +11,7 @@ __pycache__/
 # data
 input/
 output/
-viz/data
+# viz/data
 
 # Distribution / packaging
 .Python
