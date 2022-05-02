@@ -26,7 +26,7 @@ def get_agency_geo(raw, db):
         return
 
 
-def load_data():
+def spreadsheet_to_geo():
     dfs = pandas.read_excel('process/input/Counties_Actions_May1.xlsx', sheet_name=None)
     db = sqlite3.connect(':memory:')
     for table, df in dfs.items():
@@ -48,4 +48,4 @@ def load_data():
     gdf_actions = geopandas.GeoDataFrame(df_actions, geometry=geopandas.points_from_xy(df_actions.Lon, df_actions.Lat))
     gdf_actions.to_file("process/output/actions_with_agencies.json", driver="GeoJSON")
 
-load_data()
+spreadsheet_to_geo()
