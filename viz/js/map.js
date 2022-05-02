@@ -138,12 +138,8 @@ map.on("load", () => {
     }
   });
 
-  map.on("mouseenter", "actions", (e) => {
+  map.on("mousemove", "actions", (e) => {
     map.getCanvas().style.cursor = "pointer";
     handleActionClick(e, map, popup);
   });
-  // map.on("mouseleave", "actions", () => {
-  //   map.getCanvas().style.cursor = "";
-  //   handleActionClear(map);
-  // });
 });
