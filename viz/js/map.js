@@ -3,9 +3,57 @@ mapboxgl.accessToken =
 const map = new mapboxgl.Map({
   container: "map",
   style: "mapbox://styles/mapbox/dark-v10",
-  center: [-93.5, 46.5],
-  zoom: 7,
+  bounds: [-97.42443, 48.991, -91.73633, 44.63545],
 });
+
+const handleActionClick = (e, map, popup) => {
+  action = e.features[0];
+  agencies_pts = JSON.parse(action.properties.agency_geojson);
+  const action_coords = action.geometry.coordinates.slice();
+  map.getSource("agencies_pts").setData(agencies_pts);
+  const lineFeatures = {
+    type: "FeatureCollection",
+    features: [],
+  };
+  agencies_pts.features.map((agency) => {
+    if (agency.geometry) {
+      lineFeatures.features.push({
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: [action_coords, agency.geometry.coordinates.slice()],
+        },
+      });
+    }
+  });
+  map.getSource("agencies_line").setData(lineFeatures);
+  map.getSource("selected_action").setData({
+    type: "Feature",
+    properties: {},
+    geometry: {
+      type: "Point",
+      coordinates: action_coords,
+    },
+  });
+
+  const description =
+    "<b>" +
+    action.properties["Date(s)"] +
+    "</b><br>" +
+    action.properties["Description"];
+  // popup.setLngLat(action_coords).setHTML(description).addTo(map);
+};
+
+const handleActionClear = (map) => {
+  const empty = {
+    type: "FeatureCollection",
+    features: [], // <--- no features
+  };
+  map.getSource("agencies_pts").setData(empty);
+  map.getSource("agencies_line").setData(empty);
+  map.getSource("selected_action").setData(empty);
+};
 
 map.on("load", () => {
   map.addSource("actions", {
@@ -70,52 +118,32 @@ map.on("load", () => {
     source: "selected_action",
     layout: {},
     paint: {
-      "circle-color": "#00b7bf",
-      "circle-radius": 18,
+      "circle-color": "blue",
+      "circle-radius": 8,
       "circle-stroke-width": 1,
       "circle-stroke-color": "#333",
     },
   });
 
-  map.on("click", "actions", (e) => {
-    action = e.features[0];
-    agencies_pts = JSON.parse(action.properties.agency_geojson);
-    const action_coords = action.geometry.coordinates.slice();
-    map.getSource("agencies_pts").setData(agencies_pts);
-    console.log(action_coords);
-    console.log(agencies_pts);
-    console.log(action.properties);
-    const lineFeatures = {
-      type: "FeatureCollection",
-      features: [],
-    };
-    agencies_pts.features.map((agency) => {
-      if (agency.geometry) {
-        lineFeatures.features.push({
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "LineString",
-            coordinates: [action_coords, agency.geometry.coordinates.slice()],
-          },
-        });
-      }
-    });
-    map.getSource("agencies_line").setData(lineFeatures);
-    map.getSource("selected_action").setData({
-      type: "Feature",
-      properties: {},
-      geometry: {
-        type: "Point",
-        coordinates: action_coords,
-      },
-    });
+  const popup = new mapboxgl.Popup();
 
-    const popup =
-      "<b>" +
-      action.properties["Date(s)"] +
-      "</b><br>" +
-      action.properties["Description"];
-    new mapboxgl.Popup().setLngLat(action_coords).setHTML(popup).addTo(map);
+  map.on("click", "actions", (e) => {
+    e.preventDefault();
+    handleActionClick(e, map, popup);
   });
+
+  map.on("click", (e) => {
+    if (e._defaultPrevented === false) {
+      handleActionClear(map);
+    }
+  });
+
+  map.on("mouseenter", "actions", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+    handleActionClick(e, map, popup);
+  });
+  // map.on("mouseleave", "actions", () => {
+  //   map.getCanvas().style.cursor = "";
+  //   handleActionClear(map);
+  // });
 });
